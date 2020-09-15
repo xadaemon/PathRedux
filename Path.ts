@@ -1,8 +1,8 @@
 // Copryright 2020 Matheus Xavier all rights reserved. MIT licensed
 import { _determineSeparators } from "./_separator.ts";
 
-const LINUX_SEPS = ['/'];
-const WINDOWS_SEPS = ['\\', '/'];
+export const LINUX_SEPS = ["/"];
+export const WINDOWS_SEPS = ["\\", "/"];
 
 /**
  * this class represents a filesystem path, and allows for easy manipulation of said path
@@ -10,6 +10,7 @@ const WINDOWS_SEPS = ['\\', '/'];
 export class Path {
   private pathElements: string[];
   private separators: string[];
+  public trailingSlash: boolean = false;
 
   /**
    * 
@@ -19,6 +20,7 @@ export class Path {
   constructor(path?: string, separators?: string[]) {
     this.separators = separators || _determineSeparators();
     if (path) {
+      this.trailingSlash = path[0] === "/";
       this.pathElements = Path.explodePath(this.separators, path);
     } else {
       this.pathElements = new Array<string>();
@@ -57,7 +59,8 @@ export class Path {
    * the preferred system separator will be used
    */
   public toString(): string {
-    return this.pathElements.join(this.separators[0]);
+    const path = this.pathElements.join(this.separators[0])
+    return this.trailingSlash ? "/".concat(path) : path;
   }
 
   public push(e: string) {
@@ -93,6 +96,7 @@ export class Path {
   get exists(): boolean {
     try {
       Deno.statSync(this.toString());
+      return true;
     } catch (e) {
       // do not hide permission errors from the user
       if (e instanceof Deno.errors.PermissionDenied) {
@@ -100,7 +104,42 @@ export class Path {
       }
       return false;
     }
-    return true
+  }
+
+  get isFile(): boolean {
+    try {
+      return Deno.statSync(this.toString()).isFile;
+    } catch (e) {
+      // do not hide permission errors from the user
+      if (e instanceof Deno.errors.PermissionDenied) {
+        throw e;
+      }
+      return false;
+    }
+  }
+
+  get isDir(): boolean {
+    try {
+      return Deno.statSync(this.toString()).isDirectory;
+    } catch (e) {
+      // do not hide permission errors from the user
+      if (e instanceof Deno.errors.PermissionDenied) {
+        throw e;
+      }
+      return false;
+    }
+  }
+
+  get isSymlink(): boolean {
+    try {
+      return Deno.statSync(this.toString()).isSymlink;
+    } catch (e) {
+      // do not hide permission errors from the user
+      if (e instanceof Deno.errors.PermissionDenied) {
+        throw e;
+      }
+      return false;
+    }
   }
 
   /**
