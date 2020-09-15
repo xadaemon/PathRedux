@@ -3,7 +3,7 @@ Better path handling for deno. This lib handles paths in a more dynamic and prac
 
 examples:
 ```ts
-import {Path} from "https://deno.land/x/path/mod.ts";
+import Path from "https://deno.land/x/path/mod.ts";
 
 const winPath = new Path("C:\\Users\\Test\\Documents/myFile.v1.txt", ["\\", "/"]);
 console.log(winPath.elements);
