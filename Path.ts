@@ -1,4 +1,4 @@
-// Copryright 2020 Matheus Xavier all rights reserved. MIT licensed
+// Copyright 2020 Matheus Xavier all rights reserved. MIT licensed
 import { _determineSeparators } from "./_separator.ts";
 import Hashids from "./hashids.ts";
 
@@ -56,6 +56,7 @@ export class Path {
   }
 
   /**
+   * render this path object as a string
    * @returns the stored path structure as a string
    * using the preferred system separator.
    */
@@ -213,67 +214,81 @@ export class Path {
   public static fromCWD(): Path {
     return new Path(Deno.cwd());
   }
-}
 
-/**
- * 
- * @param path the desired path
- * @param parents whether or not to create the structure needed to achieve the final path
- * @returns `true` on success and `false` on failure
- */
-export function mkDirSync(path: Path, parents: boolean): boolean {
-  // if the path already exists and is a dir there is nothing to do
-  if (path.exists && path.isDir) {
+  /**
+   * @param path the desired path
+   * @param parents whether or not to create the structure needed to achieve the final path
+   * @returns `true` on success and `false` on failure
+   * 
+   */
+  public mkDirSync(parents: boolean): boolean {
+    // if the path already exists and is a dir there is nothing to do
+    if (this.exists && this.isDir) {
+      return true;
+    }
+    // find the last part of the path that is valid
+    let vp = this.findLastValidNode();
+    // take the diff between the valid path and the desired path
+    let needs = Path.diff(this, vp);
+    // create the needed paths
+    for (let i = 0; i < needs.length; i++) {
+      vp.push(needs[i]);
+      Deno.mkdirSync(vp.toString());
+    }
     return true;
   }
-  // find the last part of the path that is valid
-  let vp = path.findLastValidNode();
-  // take the diff between the valid path and the desired path
-  let needs = Path.diff(path, vp);
-  // create the needed paths
-  for (let i = 0; i < needs.length; i++) {
-    vp.push(needs[i]);
-    Deno.mkdirSync(vp.toString());
-  }
-  return true;
-}
 
-export async function mkDir(path: Path, parents: boolean): Promise<boolean> {
-  // if the path already exists and is a dir there is nothing to do
-  if (path.exists && path.isDir) {
+  public async mkDir(path: Path, parents: boolean): Promise<boolean> {
+    // if the path already exists and is a dir there is nothing to do
+    if (this.exists && this.isDir) {
+      return true;
+    }
+    // find the last part of the path that is valid
+    let vp = this.findLastValidNode();
+    // take the diff between the valid path and the desired path
+    let needs = Path.diff(this, vp);
+    // create the needed paths
+    for (let i = 0; i < needs.length; i++) {
+      vp.push(needs[i]);
+      await Deno.mkdir(vp.toString());
+    }
     return true;
   }
-  // find the last part of the path that is valid
-  let vp = path.findLastValidNode();
-  // take the diff between the valid path and the desired path
-  let needs = Path.diff(path, vp);
-  // create the needed paths
-  for (let i = 0; i < needs.length; i++) {
-    vp.push(needs[i]);
-    await Deno.mkdir(vp.toString());
+  /**
+   * Generate a new random folder name with it's path set to the system temporary folder
+   * @param rngScalar 
+   * @param prefix 
+   * @param suffix 
+   * @param joinChar 
+   */
+  public static genTmpPath(
+    rngScalar: number = 4096,
+    prefix: string = "",
+    suffix: string = "",
+    joinChar: string = ".",
+    tmpDir?: string
+  ): Path {
+    const rn = Math.floor(Math.random() * rngScalar);
+    const hsi = new Hashids(rn.toString(), 10);
+    let tempPath;
+    prefix = prefix ? prefix + joinChar : "";
+    suffix = suffix ? joinChar + suffix : "";
+    if (!tmpDir) {
+      switch (Deno.build.os) {
+        case "windows":
+          tempPath = Deno.env.get("TMP") || Deno.env.get("TEMP");
+          break;
+        case "darwin":
+        case "linux":
+          tempPath = Deno.env.get("TMPDIR") || "/tmp";
+          break;
+        default:
+          throw new Error("could not determine the system's temporary folder path, you can try specifying a tmpDir param");
+      }
+    } else {
+      tempPath = tmpDir;
+    }
+    let pt = new Path(tempPath);
+    return pt.push(prefix + hsi.encode(rn) + suffix);
   }
-  return true;
-}
-
-export function genTmpPath(
-  rngScalar: number = 4096,
-  prefix: string = "",
-  suffix: string = "",
-  joinChar: string = ".",
-): Path {
-  const rn = Math.floor(Math.random() * rngScalar);
-  const hsi = new Hashids(rn.toString(), 10);
-  let tempPath;
-  prefix = prefix ? prefix+joinChar:"";
-  suffix = suffix ? joinChar+suffix:"";
-  switch (Deno.build.os) {
-    case "windows":
-      tempPath = Deno.env.get("TMP") || Deno.env.get("TEMP");
-      break;
-    case "darwin":
-    case "linux":
-      tempPath = Deno.env.get("TMPDIR") || "/tmp";
-  }
-  let pt = new Path(tempPath)
-  return pt.push(prefix + hsi.encode(rn) + suffix);
 }

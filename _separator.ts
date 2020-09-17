@@ -1,4 +1,4 @@
-// Copryright 2020 Matheus Xavier all rights reserved. MIT licensed
+// Copyright 2020 Matheus Xavier all rights reserved. MIT licensed
 
 export function _determineSeparators(): string[] {
   switch (Deno.build.os) {
