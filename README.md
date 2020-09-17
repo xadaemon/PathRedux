@@ -26,6 +26,9 @@ console.log(nixPath.exists);
 * Get file extensions with ease and correctly
 * Make assertions about a path
 
+# Stability and series LTS
+The current major series say eg: 2.x.x is considered supported and will receive bugfixes for the last 2 minor versions, all revisions within a supported minor version are also supported.
+
 # Thanks
 this lib incorporates work from the hashids lib found on hashids.ts
 Copyright (c) 2012-2020 Bazyli Brzóska & Ivan Akimov
