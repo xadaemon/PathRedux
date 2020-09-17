@@ -2,7 +2,9 @@
 import { _determineSeparators } from "./_separator.ts";
 import Hashids from "./hashids.ts";
 
+/** linux style separators constant */
 export const LINUX_SEPS = ["/"];
+/** windows style separators constant */
 export const WINDOWS_SEPS = ["\\", "/"];
 
 /**
@@ -14,7 +16,7 @@ export class Path {
   public trailingSlash: boolean = false;
 
   /**
-   * Construct a path object
+   * construct a path object
    * @param path initialize this instance with a path if passed
    * @param separators not needed most of the time allows for 
    */
@@ -216,12 +218,16 @@ export class Path {
   }
 
   /**
+   * create the specified path if parents is true any needed paths will be created
    * @param path the desired path
    * @param parents whether or not to create the structure needed to achieve the final path
    * @returns `true` on success and `false` on failure
    * 
    */
-  public mkDirSync(parents: boolean): boolean {
+  public mkDirSync(parents: boolean = false): boolean {
+    if (!parents) {
+      Deno.mkdirSync(this.toString());
+    }
     // if the path already exists and is a dir there is nothing to do
     if (this.exists && this.isDir) {
       return true;
@@ -238,7 +244,10 @@ export class Path {
     return true;
   }
 
-  public async mkDir(path: Path, parents: boolean): Promise<boolean> {
+  public async mkDir(parents: boolean = false): Promise<boolean> {
+    if (!parents) {
+      await Deno.mkdir(this.toString());
+    }
     // if the path already exists and is a dir there is nothing to do
     if (this.exists && this.isDir) {
       return true;
@@ -254,6 +263,7 @@ export class Path {
     }
     return true;
   }
+
   /**
    * Generate a new random folder name with it's path set to the system temporary folder
    * @param rngScalar 
