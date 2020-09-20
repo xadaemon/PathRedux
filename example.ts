@@ -1,5 +1,4 @@
 import Path from "./mod.ts";
-import { genTmpPath } from "./mod.js";
 
-const path = genTmpPath();
+const path = Path.genTmpPath();
 console.log(path.toString());
