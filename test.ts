@@ -1,4 +1,4 @@
-import { Path, WINDOWS_SEPS } from "./mod.ts";
+import { Path } from "./mod.ts";
 import {
   assertEquals,
   assertArrayContains,
