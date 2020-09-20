@@ -1,7 +1,8 @@
 # PathRedux
 Better path handling for deno. This lib handles paths in a more dynamic and practical fashion
 
-examples:
+example:
+note: you can also import directly from the dist folder a pre-compiled bundle
 ```ts
 import {Path, WINDOWS_SEPS} from "https://deno.land/x/path/mod.ts";
 
@@ -22,7 +23,7 @@ console.log(nixPath.exists);
 # Features
 * Handles windows acceptance of `\` or `/` as separators
 * On linux `\` is treated as escaped characters correctly
-* Easily manipulate paths by pushing/poping like an array
+* Easily manipulate paths by pushing/popping like an array
 * Get file extensions with ease and correctly
 * Make assertions about a path
 

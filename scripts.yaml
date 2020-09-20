@@ -1,2 +1,4 @@
 scripts:
-  pack: deno run --unstable -A https://deno.land/x/denopack@0.9.0/cli.ts -i mod.ts -o mod.js
+  pack: |
+    deno run --unstable -A https://deno.land/x/denopack@0.9.0/cli.ts -i mod.ts -d dist -o mod.js
+    gzip -c dist/mod.js > dist/mod.gz

@@ -281,7 +281,7 @@ export class Path {
    * @return true if success false otherwise
    */
   public async rm(recursive: boolean = false): Promise<void> {
-    await Deno.remove(this.toString(), {recursive});
+    await Deno.remove(this.toString(), { recursive });
     return;
   }
 
@@ -291,8 +291,9 @@ export class Path {
    * @return true if success false otherwise
    */
   public rmSync(recursive: boolean = false): void {
-    Deno.removeSync(this.toString(), {recursive});
+    Deno.removeSync(this.toString(), { recursive });
   }
+
 
   /**
    * Generate a new random folder name with it's path set to the system temporary folder
@@ -300,6 +301,7 @@ export class Path {
    * @param prefix 
    * @param suffix 
    * @param joinChar 
+   * @deprecated slated for removal on v3.0.0
    */
   public static genTmpPath(
     rngScalar: number = 4096,
@@ -308,27 +310,46 @@ export class Path {
     joinChar: string = ".",
     tmpDir?: string
   ): Path {
+    return Path.makeTmpDir({ rngScalar, prefix, suffix, joinChar, tmpDir });
+  }
+
+
+  public static getTmpPath(): Path {
+    let tempPath: string | undefined;
+    switch (Deno.build.os) {
+      case "windows":
+        tempPath = Deno.env.get("TMP") || Deno.env.get("TEMP");
+        break;
+      case "darwin":
+      case "linux":
+        tempPath = Deno.env.get("TMPDIR") || "/tmp";
+        break;
+      default:
+        throw new Error("could not determine the system's temporary folder path, you can try specifying a tmpDir param");
+    }
+    return new Path(tempPath);
+  }
+
+
+  /**
+   * Generate a new random folder name with it's path set to the system temporary folder
+   * @param rngScalar 
+   * @param prefix 
+   * @param suffix 
+   * @param joinChar 
+   */
+  public static makeTmpDir(
+    { rngScalar = 4096, prefix = "", suffix = "", joinChar = ".", tmpDir }: { rngScalar?: number; prefix?: string; suffix?: string; joinChar?: string; tmpDir?: string; } = {}): Path {
     const rn = Math.floor(Math.random() * rngScalar);
     const hsi = new Hashids(rn.toString(), 10);
-    let tempPath;
+    let pt;
     prefix = prefix ? prefix + joinChar : "";
     suffix = suffix ? joinChar + suffix : "";
     if (!tmpDir) {
-      switch (Deno.build.os) {
-        case "windows":
-          tempPath = Deno.env.get("TMP") || Deno.env.get("TEMP");
-          break;
-        case "darwin":
-        case "linux":
-          tempPath = Deno.env.get("TMPDIR") || "/tmp";
-          break;
-        default:
-          throw new Error("could not determine the system's temporary folder path, you can try specifying a tmpDir param");
-      }
+      pt = Path.getTmpPath();
     } else {
-      tempPath = tmpDir;
+      pt = new Path(tmpDir);
     }
-    let pt = new Path(tempPath);
     return pt.push(prefix + hsi.encode(rn) + suffix);
   }
 }
