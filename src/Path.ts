@@ -82,11 +82,11 @@ export class Path {
   }
 
   /**
-   * removes an element from the end of this path and returns the path to allow for chaining
-   * @deprecated the naming on this method is unfortunate and it's considered deprecated in favor of `del`
+   * Pop an element from the path and return the popped element as another Path
    */
   public pop(): Path {
-    return this.del();
+    let path_len = this.pathElements.length - 1;
+    return new Path(this.pathElements[path_len], this.separators);
   }
 
   /**
