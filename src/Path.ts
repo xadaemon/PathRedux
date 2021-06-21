@@ -65,7 +65,11 @@ export class Path {
    * @return the stored path structure as a string
    * using the preferred system separator.
    */
-  public toString(prefix: string = "", suffix: string = "", separator?: string): string {
+  public toString(
+    prefix: string = "",
+    suffix: string = "",
+    separator?: string,
+  ): string {
     let path = this.pathElements.join(separator || this.separators[0]);
     path = prefix.concat(path.concat(suffix));
     return this.trailingSlash ? "/".concat(path) : path;
@@ -82,11 +86,11 @@ export class Path {
   }
 
   /**
-   * removes an element from the end of this path and returns the path to allow for chaining
-   * @deprecated the naming on this method is unfortunate and it's considered deprecated in favor of `del`
+   * Pop an element from the path and return the popped element as another Path
    */
   public pop(): Path {
-    return this.del();
+    let path_len = this.pathElements.length - 1;
+    return new Path(this.pathElements[path_len], this.separators);
   }
 
   /**
@@ -102,7 +106,28 @@ export class Path {
    * @param ignoreFiles if set files will be ignored on the resolution
    * @returns a new Path object with a Path object until the valid node
    */
-  public findLastValidNode(ignoreFiles?: boolean): Path {
+  public async findLastValidNode(ignoreFiles?: boolean): Promise<Path> {
+    return new Promise<Path>(() => {
+      let strRepr = this.toString();
+      const np = new Path(strRepr);
+      if (ignoreFiles) {
+        while (!np.exists && !np.isFile) {
+          np.del();
+        }
+      } else {
+        while (!np.exists) {
+          np.del();
+        }
+      }
+    });
+  }
+
+  /**
+   * finds the first valid node walking a path from the right synchronously
+   * @param ignoreFiles if set files will be ignored on the resolution
+   * @returns a new Path object with a Path object until the valid node
+   */
+  public findLastValidNodeSync(ignoreFiles?: boolean): Path {
     let strRepr = this.toString();
     const np = new Path(strRepr);
     if (ignoreFiles) {
@@ -119,7 +144,7 @@ export class Path {
 
   /**
    * takes the diff between Path x and Path y
-   * @param x 
+   * @param x
    * @param y
    * @returns elements in x but not in y
    */
@@ -234,7 +259,7 @@ export class Path {
    * @param path the desired path
    * @param parents whether or not to create the structure needed to achieve the final path
    * @returns `true` on success and `false` on failure
-   * 
+   *
    */
   public mkDirSync(parents: boolean = false): boolean {
     if (!parents) {
@@ -245,7 +270,7 @@ export class Path {
       return true;
     }
     // find the last part of the path that is valid
-    let vp = this.findLastValidNode();
+    let vp = this.findLastValidNodeSync();
     // take the diff between the valid path and the desired path
     let needs = Path.diff(this, vp);
     // create the needed paths
@@ -265,7 +290,7 @@ export class Path {
       return true;
     }
     // find the last part of the path that is valid
-    let vp = this.findLastValidNode();
+    let vp = this.findLastValidNodeSync();
     // take the diff between the valid path and the desired path
     let needs = Path.diff(this, vp);
     // create the needed paths
@@ -285,7 +310,6 @@ export class Path {
     return;
   }
 
-
   /**
    * remove self sync
    * @return true if success false otherwise
@@ -294,13 +318,12 @@ export class Path {
     Deno.removeSync(this.toString(), { recursive });
   }
 
-
   /**
    * Generate a new random folder name with it's path set to the system temporary folder
-   * @param rngScalar 
-   * @param prefix 
-   * @param suffix 
-   * @param joinChar 
+   * @param rngScalar
+   * @param prefix
+   * @param suffix
+   * @param joinChar
    * @deprecated slated for removal on v3.0.0
    */
   public static genTmpPath(
@@ -308,11 +331,10 @@ export class Path {
     prefix: string = "",
     suffix: string = "",
     joinChar: string = ".",
-    tmpDir?: string
+    tmpDir?: string,
   ): Path {
     return Path.makeTmpDir({ rngScalar, prefix, suffix, joinChar, tmpDir });
   }
-
 
   public static getTmpPath(): Path {
     let tempPath: string | undefined;
@@ -325,21 +347,29 @@ export class Path {
         tempPath = Deno.env.get("TMPDIR") || "/tmp";
         break;
       default:
-        throw new Error("could not determine the system's temporary folder path, you can try specifying a tmpDir param");
+        throw new Error(
+          "could not determine the system's temporary folder path, you can try specifying a tmpDir param",
+        );
     }
     return new Path(tempPath);
   }
 
-
   /**
    * Generate a new random folder name with it's path set to the system temporary folder
-   * @param rngScalar 
-   * @param prefix 
-   * @param suffix 
-   * @param joinChar 
+   * @param rngScalar
+   * @param prefix
+   * @param suffix
+   * @param joinChar
    */
   public static makeTmpDir(
-    { rngScalar = 4096, prefix = "", suffix = "", joinChar = ".", tmpDir }: { rngScalar?: number; prefix?: string; suffix?: string; joinChar?: string; tmpDir?: string; } = {}): Path {
+    { rngScalar = 4096, prefix = "", suffix = "", joinChar = ".", tmpDir }: {
+      rngScalar?: number;
+      prefix?: string;
+      suffix?: string;
+      joinChar?: string;
+      tmpDir?: string;
+    } = {},
+  ): Path {
     const rn = Math.floor(Math.random() * rngScalar);
     const hsi = new Hashids(rn.toString(), 10);
     let pt;
